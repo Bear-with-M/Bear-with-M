@@ -1,6 +1,4 @@
-![vs_error](banner1.gif "anim")
+![banner_error](banner1.gif "banner")
 
 
-<p style="font-family: Avantgarde";> Hello! readme test</p>  
-
-Hello! ⭐ readme test ⭐
+<p style="font-family: Avantgarde";> Hello! readme test</p>  ⭐ Hello! ⭐ readme test ⭐
