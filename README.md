@@ -1,4 +1,4 @@
-![vs_error](nickname.gif "anim")
+![vs_error](banner.gif "anim")
 
 
 test 1
