@@ -1,4 +1,4 @@
-![vs_error](anim_fps15.gif "anim")
+![vs_error](anim.gif "anim")
 
 
 test 1
