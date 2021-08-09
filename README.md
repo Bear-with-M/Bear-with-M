@@ -1,8 +1,7 @@
 ![vs_error](banner1.gif "anim")
 
 
-test 1
+<p align="center">Hello!<p>
 
-test 
 
-⭐ test
+<p align="center">⭐ test ⭐<p>
