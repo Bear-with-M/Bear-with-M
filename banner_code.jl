@@ -110,9 +110,9 @@ function shooting_stars(filename::String;
             ★.frame = i
         end
 
-        small_stars  = filter(★-> (★.frame - ★.born) / ★.fade_speed < 1, small_stars)
-        medium_stars = filter(★-> (★.frame - ★.born) / ★.fade_speed < 1, medium_stars)
-        big_stars    = filter(★-> (★.frame - ★.born) / ★.fade_speed < 1, big_stars)
+        small_stars  = filter(★-> fade(★) > 0, small_stars)
+        medium_stars = filter(★-> fade(★) > 0, medium_stars)
+        big_stars    = filter(★-> fade(★) > 0, big_stars)
     end
 
     gif(anim, "$filename.gif", fps = fps)
