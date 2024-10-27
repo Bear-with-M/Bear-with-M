@@ -1,121 +1,197 @@
 using Plots
 using Distributions
+using Random
 gr()
 
-NAME = "M    A    R    C    I    N       B    E    A    R"
-FADE_SPEED = Normal(50, 5)
-PACE1 = Normal(0.02, 0.01)
-PACE2 = Normal(0.05, 0.01)
+NAME = "BEAR WITH M" |> collect |> s -> join(s, "   ")
+FADE_SPEED_DIST = Normal(50, 5) 
+PACE_DIST = LogNormal(0, 0.1)
+TRAIL_LENGTH = 40:50:60
 
+
+"""
+    mutable struct Star
+
+    A data structure to represent a star.
+
+    - `x0` and `y0` are the initial positions of the star.
+    - `x` and `y` are the current positions of the star.
+    - `frame` is the current frame of the animation.
+    - `born` is the frame when the star was born.
+    - `fade_speed` is the speed at which the star fades.
+    - `pace` is the speed at which the star moves.
+    - `markersize` is the size of the star.
+    - `trail_length` is the length of the trail of the star.
+    """
 mutable struct Star
-    frame::Int64
+    x0::Float64
+    y0::Float64
     x::Float64
     y::Float64
-    x₀::Float64
-    y₀::Float64
+    frame::Int64
     born::Int64
     fade_speed::Float64
     pace::Float64
+    markersize::Float64
+    trail_length::Int64
 end
 
 
+"""
+    spawn_star(frame::Int64, size::Int64)
+
+Create a new star at the given frame and size.
+
+Returns a `Star` object with the given frame and size, and a random
+position, fade speed, pace, and trail length.
+"""
+function spawn_star(frame::Int64, size::Int64)
+    x0, y0 = rand(2)
+    fade_speed = rand(FADE_SPEED_DIST)
+    trail_length = sample(TRAIL_LENGTH)
+    pace = rand(PACE_DIST)
+    return Star(
+        x0, y0, x0, y0,
+        frame, frame,
+        fade_speed, pace, size,
+        trail_length
+        )
+end
+
+"""
+    fade(★::Star) -> Float64
+
+Calculate the fade level of a star.
+
+The fade level is determined by how long the star has been alive relative to its fade speed. 
+A value of 1 indicates a newly born star, while a value of 0 indicates a fully faded star.
+"""
 fade(★::Star) = 1 - (★.frame - ★.born) / ★.fade_speed
 
-function Plots.scatter!(stars::Array{Star,1}; markersize::Int64=3)
+
+"""
+    scatter!(stars::Array{Star,1})
+
+Plot all the stars in the given array.
+
+The `markeralpha` argument is set to the fade level of the star, which
+is calculated by the `fade` function.
+"""
+function Plots.scatter!(stars::Array{Star,1})
     for ★ in stars
-        scatter!([★.x], [★.y],
-                 color=:white,
-                 markeralpha=fade(★),
-                 label=false,
-                 markerstrokewidth=1,
-                 markersize=markersize)
+        scatter!(
+            [★.x], [★.y],
+            color=:white,
+            markeralpha=fade(★),
+            label=false,
+            markerstrokewidth=1,
+            markersize=★.markersize
+        )
     end
 end
 
 
-function trail!(stars::Array{Star,1}; size::Float64=1, dots::Int64=50)
+"""
+    trail!(stars::Array{Star,1})
+
+    Plot the trail of stars in the given array.
+
+    - `stars`: An array of `Star` objects.
+"""
+function trail!(stars::Array{Star,1})
     for ★ in stars
-        α = LinRange(fade(★), 0, dots)
-        scatter!(LinRange(★.x, ★.x₀, 50),
-                 LinRange(★.y, ★.y₀, 50),
-                 color=:white,
-                 markersize=size,
-                 alpha=α,
-                 label=false)
+        alpha = LinRange(fade(★), 0, ★.trail_length)
+        scatter!(
+            LinRange(★.x, ★.x0, ★.trail_length),
+            LinRange(★.y, ★.y0, ★.trail_length),
+            color=:white,
+            markersize=★.markersize,
+            alpha=alpha,
+            label=false
+        )
     end
 end
 
 
+"""
+    shooting_stars(filename::String;
+                   frames::Int64=100,
+                   fps::Int64=24,
+                   angle::Float64=0.02,
+                   small_bkg_stars::Int64=70,
+                   medium_bkg_stars::Int64=20,
+                   big_bkg_stars::Int64=10,
+                   size::Tuple{Int64,Int64}=(900, 300),
+                   frequencies::Dict=Dict(1=>7, 2=>17, 3=>31),
+                   seed::Union{Nothing,Int64}=nothing)
+
+Generate an animated GIF of shooting stars.
+
+- `filename`: The output filename for the GIF.
+- `frames`: Number of frames in the animation.
+- `fps`: Frames per second of the animation.
+- `angle`: Angle of movement for the stars.
+- `small_bkg_stars`: Number of small background stars.
+- `medium_bkg_stars`: Number of medium background stars.
+- `big_bkg_stars`: Number of big background stars.
+- `size`: Size of the plot.
+- `frequencies`: A dictionary mapping star types to their spawn frequencies.
+- `seed`: An optional seed for the random number generator. If `nothing`, the
+  radnom seed is used. If an integer, the seed is set to that value before
+  generating the animation.
+"""
 function shooting_stars(filename::String;
                         frames::Int64=100,
                         fps::Int64=24,
                         angle::Float64=0.02,
+                        small_bkg_stars::Int64=70,
+                        medium_bkg_stars::Int64=20,
+                        big_bkg_stars::Int64=10,
                         size::Tuple{Int64,Int64}=(900, 300),
-                        small_stars_frequency::Int64=7,
-                        medium_stars_frequency::Int64=17,
-                        big_stars_frequency::Int64=31)
+                        frequencies::Dict=Dict(1=>7, 2=>17, 3=>31),
+                        seed::Union{Nothing,Int64}=nothing)
 
-    a, b = rand(2)
-    c, d = rand(2)
-    small_stars = [Star(1, a, b, a, b, 1, 50., 0.02)]
-    medium_stars = [Star(1, c, d, c, d, 1, 50., 0.05)]
-    big_stars = [Star(1, 1, 1, 1, 1, 1, 50., 0.05)]
-    x0, y0 = rand(70), rand(70)
-    x02, y02 = rand(20), rand(20)
-    x03, y03 = rand(10), rand(10)
+    Random.seed!(seed)
+    frequencies = Dict(values(frequencies) .=> keys(frequencies))
+    stars = [spawn_star(1, s) for s ∈ 1:3]
+    x01, y01 = rand(small_bkg_stars),  rand(small_bkg_stars)
+    x02, y02 = rand(medium_bkg_stars), rand(medium_bkg_stars)
+    x03, y03 = rand(big_bkg_stars),    rand(big_bkg_stars)
     title = ((0.5, 0.3, text(NAME, "Avantgarde Book", 15, :white)))
-
     anim = @animate for i ∈ 1:frames
 
-        scatter(x0, y0,
-                color=:white,
-                size=size,
-                label=false,
-                xlims = (0, 1),
-                ylims = (0, 1),
-                foreground_color=:black,
-                background_color=:black,
-                markersize=1,
-                framestyle = :none)                                  # background stars
+        plot(
+            size=size,
+            label=false, 
+            xlims=(0, 1), 
+            ylims=(0, 1),
+            foreground_color=:black,
+            background_color=:black,
+            markersize=1,
+            framestyle=:none
+        )
 
+        scatter!(x01, y01, markersize=1, color=:white, label=false)  # background stars
         scatter!(x02, y02, markersize=2, color=:white, label=false)  # background stars
         scatter!(x03, y03, markersize=3, color=:white, label=false)  # background stars
         annotate!(title)
 
-        if i % small_stars_frequency == 0
-            𝒳, 𝒴 = rand(2)
-            append!(small_stars, [Star(i, 𝒳, 𝒴, 𝒳, 𝒴, i, rand(FADE_SPEED), rand(PACE1))])
-
-        elseif i % medium_stars_frequency == 0
-            𝒳, 𝒴 = rand(2)
-            append!(medium_stars, [Star(i, 𝒳, 𝒴, 𝒳, 𝒴, i, rand(FADE_SPEED), rand(PACE2))])
-
-        elseif i % big_stars_frequency == 0
-            𝒳, 𝒴 = rand(2)
-            append!(big_stars, [Star(i, 𝒳, 𝒴, 𝒳, 𝒴, i, rand(FADE_SPEED), rand(PACE2))])
+        for key in keys(frequencies)
+            if i % key == 0
+                push!(stars, spawn_star(i, frequencies[key]))
+            end
         end
 
-        scatter!(small_stars, markersize=1)
-        trail!(small_stars, size=1.)
+        scatter!(stars); trail!(stars)
 
-        scatter!(medium_stars, markersize=2)
-        trail!(medium_stars, size=2.)
-
-        scatter!(big_stars, markersize=3)
-        trail!(big_stars, size=4.)
-
-        for ★ in vcat(small_stars, medium_stars, big_stars)
-            ★.x = ★.x - angle
-            ★.y = ★.y - angle
+        for ★ in stars
+            ★.x = ★.x - ★.pace * angle
+            ★.y = ★.y - ★.pace * angle
             ★.frame = i
         end
-
-        small_stars  = filter(★-> fade(★) > 0, small_stars)
-        medium_stars = filter(★-> fade(★) > 0, medium_stars)
-        big_stars    = filter(★-> fade(★) > 0, big_stars)
+        stars  = filter(★ -> fade(★) > 0, stars)
     end
-
     gif(anim, "$filename.gif", fps = fps)
 end
 
-shooting_stars("nickname"; frames=240, fps=24)
+shooting_stars("banner1"; frames=240, fps=24, seed=6)
