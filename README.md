@@ -1,4 +1,4 @@
-![banner_error](banner1.gif "banner")
+![banner_error](banner.gif "banner")
 
 
 <p align="center">⭐ Hello! ⭐ I'm interested in maths and astronomy ⭐ Working with Python, R, Julia, Dash ⭐ </p> 
